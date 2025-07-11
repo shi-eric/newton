@@ -19,15 +19,15 @@ jobs:
         with:
           aws-region: us-east-2
           role-to-assume: arn:aws:iam::968945269301:role/shi-eric-newton-github-actions-role-Role-iSChcyjwxpNX
+
       - name: Launch EC2 instance with latest NVIDIA AMI
         id: launch
         run: |
           echo "Finding the latest NVIDIA GPU Cloud VMI..."
-          LATEST_AMI_ID=$(aws ec2 describe-images \
-            --region us-east-2 \
-            --owners 679593333241 \
-            --filters "Name=name,Values=NVIDIA GPU Cloud VMI Base*" "Name=state,Values=available" "Name=architecture,Values=x86_64" \
-            --query "sort_by(Images, &CreationDate)[-1].ImageId" \
+          LATEST_AMI_ID=$(aws ec2 describe-images --region us-east-2 \
+            --owners amazon \
+            --filters 'Name=name,Values=Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 24.04) ????????' 'Name=state,Values=available' \
+            --query 'reverse(sort_by(Images, &CreationDate))[:1].ImageId' \
             --output text)
 
           echo "Latest AMI ID found: $LATEST_AMI_ID"
@@ -63,9 +63,6 @@ jobs:
           echo "--- Starting sequence on EC2 instance ---"
           date
 
-          echo "--- Sourcing profile to trigger driver installation ---"
-          source /home/ubuntu/.bashrc 
-
           echo "--- Checking NVIDIA driver status ---"
           nvidia-smi || echo "nvidia-smi command failed. Driver may not be installed."
 
@@ -86,7 +83,7 @@ jobs:
 
           # --- Running Tests ---
           echo "Running Newton test suite..."
-          uv run --extra dev -m newton.tests --junit-report-xml rspec.xml --coverage --coverage-xml coverage.xml -p 'test_cloth.py'
+          uv run --extra dev -m newton.tests --junit-report-xml /tmp/rspec.xml --coverage --coverage-xml /tmp/coverage.xml -p 'test_model.py'
           echo "--- Tests complete! ---"
 
           echo "--- Sequence complete ---"
@@ -101,7 +98,7 @@ jobs:
           AVAILABILITY_ZONE=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
             --query "Reservations[0].Instances[0].Placement.AvailabilityZone" --output text)
 
-          echo "Pushing temporary SSH key to instance..."
+          echo "Pushing temporary SSH key to instance (1/2)..."
           aws ec2-instance-connect send-ssh-public-key \
             --instance-id $INSTANCE_ID \
             --instance-os-user ubuntu \
@@ -112,7 +109,26 @@ jobs:
           scp -o "StrictHostKeyChecking=no" -i ./temp_key ./run_tests.sh ubuntu@$PUBLIC_IP:/tmp/run_tests.sh
 
           echo "Executing script on instance..."
-          ssh -o "StrictHostKeyChecking=no" -i ./temp_key ubuntu@$PUBLIC_IP "chmod +x /tmp/run_tests.sh && /tmp/run_tests.sh"
+          ssh -o "StrictHostKeyChecking=no" -i ./temp_key ubuntu@$PUBLIC_IP "cd /tmp && chmod +x /tmp/run_tests.sh && /tmp/run_tests.sh"
+
+          echo "Pushing temporary SSH key to instance (2/2)..."
+          aws ec2-instance-connect send-ssh-public-key \
+            --instance-id $INSTANCE_ID \
+            --instance-os-user ubuntu \
+            --availability-zone $AVAILABILITY_ZONE \
+            --ssh-public-key file://./temp_key.pub
+
+          echo "Downloading test results..."
+          scp -o "StrictHostKeyChecking=no" -i ./temp_key ubuntu@$PUBLIC_IP:/tmp/coverage.xml ./coverage.xml || echo "coverage.xml not found"
+          scp -o "StrictHostKeyChecking=no" -i ./temp_key ubuntu@$PUBLIC_IP:/tmp/rspec.xml ./rspec.xml || echo "rspec.xml not found"
+
+      - name: Test Summary
+        uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86
+        with:
+          paths: "rspec.xml"
+          show: "fail"
+        if: always()
+
   cleanup:
     name: Cleanup EC2 Instance
     runs-on: ubuntu-latest
