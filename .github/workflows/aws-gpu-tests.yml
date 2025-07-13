@@ -27,7 +27,7 @@ concurrency:
 jobs:
   check-author-membership:
     name: 🧐 Check Author Membership
-    if: github.repository == 'newton-physics/newton'
+    if: github.repository == 'shi-eric/newton'
     runs-on: ubuntu-latest
     outputs:
       is_member: ${{ steps.check_org.outputs.is_member }}
@@ -50,7 +50,7 @@ jobs:
           fi
 
   run-unit-tests-on-aws:
-    if: github.repository == 'newton-physics/newton'
+    if: github.repository == 'shi-eric/newton'
     needs: check-author-membership
     environment:
       name: ${{ needs.check-author-membership.outputs.is_member == 'false' && 'external-pr-approval' || '' }}
