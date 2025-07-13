@@ -40,26 +40,20 @@ jobs:
           ORGANIZATION: "newton-physics"
         run: |
           # Attempt to check organization membership
+
           if gh api "orgs/$ORGANIZATION/members/$PR_AUTHOR" --silent; then
-            echo "User is an organization member."
-            echo "membership_status=IS_MEMBER" >> "$GITHUB_OUTPUT"
+            echo "Membership confirmed."
+            echo "membership_status=CONFIRMED_MEMBER" >> "$GITHUB_OUTPUT"
           else
-            # Differentiate between a definitive "not found" and other errors.
-            # The `gh` CLI exits with code 4 for a 404 (Not Found) error.
-            if [ $? -eq 4 ]; then
-              echo "Membership is either private or user is not a member."
-              echo "membership_status=UNDETERMINED" >> "$GITHUB_OUTPUT"
-            else
-              echo "User is confirmed not to be a member (or another API error occurred)."
-              echo "membership_status=NOT_MEMBER" >> "$GITHUB_OUTPUT"
-            fi
+            echo "Membership is not confirmed (private or not a member)."
+            echo "membership_status=POSSIBLY_A_MEMBER" >> "$GITHUB_OUTPUT"
           fi
 
   run-unit-tests-on-aws:
     if: github.repository == 'shi-eric/newton'
     needs: check-author-membership
     environment:
-      name: ${{ needs.check-author-membership.outputs.membership_status != 'IS_MEMBER' && 'external-pr-approval' || '' }}
+      name: ${{ needs.check-author-membership.outputs.membership_status != 'CONFIRMED_MEMBER' && 'external-pr-approval' || '' }}
       url: ${{ github.event.pull_request.html_url }}
     runs-on: ubuntu-latest
     timeout-minutes: 75
