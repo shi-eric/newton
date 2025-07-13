@@ -17,21 +17,44 @@ on:
       - "docs/**"
       - "**.md"
       - ".gitlab-ci.yml"
-  push:
-    paths-ignore:
-      - "docs/**"
-      - "**.md"
-      - ".gitlab-ci.yml"
 
 # Cancels in-progress runs of this workflow for the same pull request,
 # but allows parallel runs for pushes to the main branch.
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}
+  group: ${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
+  check-author-membership:
+    name: 🧐 Check Author Membership
+    if: github.repository == 'newton-physics/newton'
+    runs-on: ubuntu-latest
+    outputs:
+      is_member: ${{ steps.check_org.outputs.is_member }}
+    steps:
+      - name: Check organization membership
+        id: check_org
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          ORGANIZATION: "newton-physics"
+        run: |
+          # This 'gh api' command exits with a success code (0) if the user is a member,
+          # and a failure code if they are not. We use that to set the output.
+          if gh api "orgs/$ORGANIZATION/members/$PR_AUTHOR" --silent; then
+            echo "✅ User is an organization member."
+            echo "is_member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "👤 User is external."
+            echo "is_member=false" >> "$GITHUB_OUTPUT"
+          fi
+
   run-unit-tests-on-aws:
     if: github.repository == 'newton-physics/newton'
+    needs: check-author-membership
+    environment:
+      name: ${{ needs.check-author-membership.outputs.is_member == 'false' && 'external-pr-approval' || '' }}
+      url: ${{ github.event.pull_request.html_url }}
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:
@@ -63,13 +86,7 @@ jobs:
           # --- Define all tags ---
           TAGS="{Key=Name,Value=newton-github-workflow-runner},{Key=created-by,Value=github-actions-newton-role}"
           TAGS="$TAGS,{Key=GitHub-Repository,Value=${{ github.repository }}}"
-
-          # Add the event-specific tag
-          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
-            TAGS="$TAGS,{Key=Source-Event,Value=Pull-Request}"
-          else
-            TAGS="$TAGS,{Key=Source-Event,Value=Push}"
-          fi
+          TAGS="$TAGS,{Key=Source-Event,Value=Pull-Request}"
 
           INSTANCE_ID=$(aws ec2 run-instances \
             --image-id $LATEST_AMI_ID \
@@ -98,7 +115,7 @@ jobs:
 
       - name: Generate script to run on instance
         env:
-          BRANCH_NAME_ENV: ${{ github.head_ref || github.ref_name }}
+          BRANCH_NAME_ENV: ${{ github.head_ref }}
           S3_BUCKET: ${{ env.AWS_S3_BUCKET }}
           PR_NUMBER: ${{ github.event.number }}
           IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
@@ -153,17 +170,12 @@ jobs:
           cd "\$REPO_DIR"
 
           # --- Checkout correct commit ---
-          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
-            if [ "${IS_FORK}" == "true" ]; then
-              echo "Pull request from a forked repository. Fetching and checking out PR head."
-              git fetch origin pull/${PR_NUMBER}/head
-              git checkout FETCH_HEAD
-            else
-              echo "Pull request from the same repository. Checking out the branch directly."
-              git checkout "${SAFE_BRANCH}"
-            fi
+          if [ "${IS_FORK}" == "true" ]; then
+            echo "Pull request from a forked repository. Fetching and checking out PR head."
+            git fetch origin pull/${PR_NUMBER}/head
+            git checkout FETCH_HEAD
           else
-            echo "Push event. Checking out the branch directly."
+            echo "Pull request from the same repository. Checking out the branch directly."
             git checkout "${SAFE_BRANCH}"
           fi
 
