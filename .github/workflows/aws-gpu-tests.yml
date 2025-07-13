@@ -27,26 +27,22 @@ concurrency:
 jobs:
   check-author-membership:
     name: Check Author Membership
-    if: github.repository == 'shi-eric/newton'
     runs-on: ubuntu-latest
     outputs:
-      is_member: ${{ steps.check_org.outputs.is_member }}
+      membership_status: ${{ steps.check_org.outputs.membership_status }}
     steps:
-      - name: Check organization membership
+      - name: Check user's organization membership
         id: check_org
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          ORGANIZATION: "newton-physics"
         run: |
-          # Attempt to check organization membership
+          ASSOCIATION="${{ github.event.pull_request.author_association }}"
+          echo "Author's association with the repository: ${ASSOCIATION}"
 
-          if gh api "orgs/$ORGANIZATION/members/$PR_AUTHOR" --silent; then
-            echo "Membership confirmed."
+          if [[ "${ASSOCIATION}" == "MEMBER" || "${ASSOCIATION}" == "OWNER" || "${ASSOCIATION}" == "COLLABORATOR" ]]; then
+            echo "Author is an organization member or collaborator."
             echo "membership_status=CONFIRMED_MEMBER" >> "$GITHUB_OUTPUT"
           else
-            echo "Membership is not confirmed (private or not a member)."
-            echo "membership_status=POSSIBLY_A_MEMBER" >> "$GITHUB_OUTPUT"
+            echo "Author is not an organization member."
+            echo "membership_status=NOT_MEMBER" >> "$GITHUB_OUTPUT"
           fi
 
   run-unit-tests-on-aws:
