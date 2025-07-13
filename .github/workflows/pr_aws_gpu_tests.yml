@@ -45,25 +45,23 @@ jobs:
             echo "membership_status=CONFIRMED_MEMBER" >> "$GITHUB_OUTPUT"
 
             # Print a message explaining the status and its impact on workflows.
-            echo |
-              --------------------------------------------------------------------------------
-              Thank you for your contribution!
-              This is the expected status for community contributors. Certain automated
-              workflows are reserved for verified organization members.
-              
-              --------------------------------------------------------------------------------
-              ❓ Are you a member of the 'newton-physics' organization and believe this is an error?
-              
-              This can happen if your organization membership is set to 'Private'. To fix this,
-              please make your membership 'Public' to enable all workflow triggers:
-              
-              1. Go to the organization's People page: https://github.com/orgs/newton-physics/people
-              2. Find your username in the list.
-              3. Click the dropdown next to your name and change your visibility from 'Private' to 'Public'.
-              
-              After updating your visibility, push a new commit to this PR to re-run the check.
-              --------------------------------------------------------------------------------
-            >&2
+            echo "--------------------------------------------------------------------------------" >&2
+            echo "Thank you for your contribution!" >&2
+            echo "This is the expected status for community contributors. Certain automated" >&2
+            echo "workflows are reserved for verified organization members." >&2
+            echo "" >&2
+            echo "--------------------------------------------------------------------------------" >&2
+            echo "❓ Are you a member of the 'newton-physics' organization and believe this is an error?" >&2
+            echo "" >&2
+            echo "This can happen if your organization membership is set to 'Private'. To fix this," >&2
+            echo "please make your membership 'Public' to enable all workflow triggers:" >&2
+            echo "" >&2
+            echo "1. Go to the organization's People page: https://github.com/orgs/newton-physics/people" >&2
+            echo "2. Find your username in the list." >&2
+            echo "3. Click the dropdown next to your name and change your visibility from 'Private' to 'Public'." >&2
+            echo "" >&2
+            echo "After updating your visibility, push a new commit to this PR to re-run the check." >&2
+            echo "--------------------------------------------------------------------------------" >&2
           else
             # Set the output for other jobs to use
             echo "membership_status=NOT_MEMBER" >> "$GITHUB_OUTPUT"
