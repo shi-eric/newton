@@ -14,12 +14,6 @@ env:
 on:
   pull_request:
 
-# Cancels in-progress runs of this workflow for the same pull request,
-# but allows parallel runs for pushes to the main branch.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
-
 jobs:
   check-author-membership:
     name: Check Author Membership
