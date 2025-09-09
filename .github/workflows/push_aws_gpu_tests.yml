@@ -22,7 +22,7 @@ on:
 jobs:
   aws-unit-tests-push:
     name: Run GPU Unit Tests on AWS EC2 (Push)
-    if: github.repository == 'newton-physics/newton'
+    if: github.repository == 'shi-eric/newton'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
@@ -276,7 +276,7 @@ jobs:
     name: Cleanup EC2 Instance
     runs-on: ubuntu-latest
     needs: aws-unit-tests-push
-    if: always() && github.repository == 'newton-physics/newton'
+    if: always() && github.repository == 'shi-eric/newton'
     permissions:
       id-token: write
       contents: read
