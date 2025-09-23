@@ -12,13 +12,7 @@ env:
   AWS_S3_BUCKET: newton-github-workflow-artifacts
 
 on:
-  pull_request_target:
-
-# Cancels in-progress runs of this workflow for the same pull request,
-# but allows parallel runs for pushes to the main branch.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
+  pull_request:
 
 jobs:
   check-author-membership:
@@ -63,7 +57,7 @@ jobs:
 
   aws-unit-tests-pr:
     name: Run GPU Unit Tests on AWS EC2 (Pull Request)
-    if: github.repository == 'newton-physics/newton'
+    if: github.repository == 'shi-eric/newton'
     needs: check-author-membership
     environment:
       name: ${{ needs.check-author-membership.outputs.membership_status != 'CONFIRMED_MEMBER' && 'external-pr-approval' || '' }}
@@ -322,7 +316,7 @@ jobs:
     name: Cleanup EC2 Instance
     runs-on: ubuntu-latest
     needs: aws-unit-tests-pr
-    if: always() && github.repository == 'newton-physics/newton'
+    if: always() && github.repository == 'shi-eric/newton'
     permissions:
       id-token: write
       contents: read
