@@ -42,9 +42,7 @@ Running the tests
 -----------------
 
 The Newton test suite supports both ``uv`` and standard ``venv`` workflows,
-and by default runs in up to eight parallel processes. On some systems, the
-tests must be run in a serial manner with ``--serial-fallback`` due to an
-outstanding bug.
+and by default runs in up to eight parallel processes.
 
 Pass ``--help`` to either run method below to see all available flags.
 
