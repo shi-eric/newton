@@ -20,7 +20,6 @@ import os
 import shutil
 import stat
 import tempfile
-import time
 from pathlib import Path
 
 
@@ -89,17 +88,9 @@ def download_git_folder(
         if target_folder.exists():
             return target_folder
 
+    # Clean up existing cache folder if it exists
     if cache_folder.exists():
-        lock_file = cache_folder / ".git" / "shallow.lock"
-        if lock_file.exists():
-            # Cache folder is being created by another process
-            # Waiting for the processing to end
-            while lock_file.exists():
-                time.sleep(1)
-            return target_folder
-        else:
-            # Clean up existing cache folder
-            _safe_rmtree(cache_folder)
+        _safe_rmtree(cache_folder)
 
     try:
         # Clone the repository with sparse checkout
