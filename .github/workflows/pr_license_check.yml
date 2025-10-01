@@ -20,7 +20,16 @@ jobs:
   check-licenses:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout PR for pull_request_target
+        if: github.event_name == 'pull_request_target'
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Checkout code for merge_group
+        if: github.event_name == 'merge_group'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check License Header
         uses: apache/skywalking-eyes/header@5c5b974209f0de5d905f37deb69369068ebfc15c
