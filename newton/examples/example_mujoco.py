@@ -1,4 +1,5 @@
 ###########################################################################
+###########################################################################
 # Example using MuJoCo solver
 #
 # This script allows us to choose between several predefined robots and
