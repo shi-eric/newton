@@ -27,6 +27,10 @@ jobs:
           ASSOCIATION="${{ github.event.pull_request.author_association }}"
           echo "Author's association with the repository: ${ASSOCIATION}"
 
+          # TESTING: Uncomment to simulate external contributor
+          echo "membership_status=NOT_MEMBER" >> "$GITHUB_OUTPUT"
+          exit 0 
+
           if [[ "${ASSOCIATION}" == "MEMBER" || "${ASSOCIATION}" == "OWNER" || "${ASSOCIATION}" == "COLLABORATOR" ]]; then
             echo "Author is a recognized member, owner, or collaborator."
             echo "membership_status=CONFIRMED_MEMBER" >> "$GITHUB_OUTPUT"
