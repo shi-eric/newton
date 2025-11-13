@@ -7,15 +7,15 @@ name: Push - AWS GPU
 
 on:
   push:
-    branches:
-      - main
-      - 'release-*'
-      - '*' # TODO: Remove this before merging
-    tags:
-      - '*'
-    paths-ignore:
-      - "docs/**"
-      - "**.md"
+#    branches:
+#      - main
+#      - 'release-*'
+#      - '*' # TODO: Remove this before merging
+#    tags:
+#      - '*'
+#    paths-ignore:
+#      - "docs/**"
+#      - "**.md"
 
 jobs:
   run-tests:
