@@ -1,5 +1,11 @@
 name: Pull Request - AWS GPU
 
+# This workflow triggers GPU tests and benchmarks for pull requests.
+# It replaces the old pr_aws_gpu_tests.yml and pr_aws_gpu_asv.yml workflows.
+# Uses reusable workflows:
+#   - aws_gpu_tests.yml
+#   - aws_gpu_benchmarks.yml
+
 on:
   pull_request_target:
 
