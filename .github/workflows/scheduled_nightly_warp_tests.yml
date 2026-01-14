@@ -19,14 +19,12 @@ env:
   AWS_ROLE_DURATION: 1800
 
 on:
-  schedule:
-    - cron: '0 11 * * *'  # Daily at 11 AM UTC (3 AM PST)
+  push:
   workflow_dispatch:  # Allow manual triggers
 
 jobs:
   check-warp-update:
     name: Check for new warp-lang nightly build
-    if: github.repository == 'newton-physics/newton'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -148,7 +146,7 @@ jobs:
     needs:
       - start-runner
       - nightly-warp-tests
-    if: always() && needs.start-runner.result != 'skipped' && github.repository == 'newton-physics/newton'
+    if: always() && needs.start-runner.result != 'skipped'
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708  # v5.1.1
