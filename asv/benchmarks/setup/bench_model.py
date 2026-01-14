@@ -114,7 +114,7 @@ class KpiInitializeViewerGL:
 
 
 class FastInitializeModel:
-    params = (["humanoid", "g1", "cartpole"], [256])
+    params = (["humanoid"], [256])
     param_names = ["robot", "num_worlds"]
 
     rounds = 1
@@ -124,7 +124,7 @@ class FastInitializeModel:
 
     def setup_cache(self):
         # Load a small model to cache the kernels
-        builder = Example.create_model_builder("cartpole", 1, randomize=False, seed=123)
+        builder = Example.create_model_builder("humanoid", 1, randomize=False, seed=123)
         model = builder.finalize(device="cpu")
         del model
 
