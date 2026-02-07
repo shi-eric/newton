@@ -21,7 +21,8 @@ jobs:
           ASSOCIATION="${{ github.event.pull_request.author_association }}"
           echo "Author's association with the repository: ${ASSOCIATION}"
 
-          if [[ "${ASSOCIATION}" == "MEMBER" || "${ASSOCIATION}" == "OWNER" || "${ASSOCIATION}" == "COLLABORATOR" ]]; then
+          # TESTING HACK: force NOT_MEMBER path to verify banners
+          if false; then
             echo "Author is a recognized member, owner, or collaborator."
             echo "membership_status=CONFIRMED_MEMBER" >> "$GITHUB_OUTPUT"
           else
@@ -67,13 +68,14 @@ jobs:
           EOF
           fi
 
+  # TESTING HACK: disable downstream jobs to avoid AWS costs
   require-approval:
     name: Require Manual Approval for External PRs
+    if: false
     runs-on: ubuntu-latest
     permissions:
-      deployments: write  # Required for creating deployment record when using environment
+      deployments: write
     needs: check-author-membership
-    if: needs.check-author-membership.outputs.membership_status != 'CONFIRMED_MEMBER'
     environment:
       name: external-pr-approval
       url: ${{ github.event.pull_request.html_url }}
@@ -83,15 +85,15 @@ jobs:
 
   run-gpu-benchmarks:
     name: Run GPU Benchmarks
+    if: false
     needs:
       - check-author-membership
       - require-approval
-    if: github.repository == 'newton-physics/newton' && (!cancelled())
     uses: ./.github/workflows/aws_gpu_benchmarks.yml
     with:
       ref: ${{ github.event.pull_request.head.sha }}
       base_ref: ${{ github.event.pull_request.base.sha }}
     secrets: inherit
     permissions:
-      id-token: write   # Required for AWS OIDC authentication in start-runner/stop-runner
-      contents: read    # Required for checkout in all jobs
+      id-token: write
+      contents: read
