@@ -86,7 +86,7 @@ For compound arrays, list per-component units:
 """[0] k_mu [Pa], [1] k_lambda [Pa], ..."""
 ```
 
-Warp array dtypes are documented in docstrings, not in type hints. Signatures use `wp.array | None`.
+For **public API** attributes and method signatures, use bare `wp.array | None` and document the concrete dtype in the docstring (e.g., `dtype :class:\`vec3\``). Warp kernel parameters require concrete dtypes inline (`wp.array(dtype=wp.vec3)`) per AGENTS.md.
 
 ## Quick Checklist
 
