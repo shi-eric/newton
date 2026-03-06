@@ -10,7 +10,7 @@ jobs:
     if: github.repository == 'shi-eric/newton'
     uses: ./.github/workflows/aws_gpu_tests.yml
     with:
-      instance-type: g5.12xlarge  # 4x NVIDIA A10 GPUs, 48 vCPUs
+      instance-type: g7e.12xlarge  # 2x NVIDIA RTX PRO 6000, 48 vCPUs
       volume-size: '92'
     permissions:
       id-token: write
