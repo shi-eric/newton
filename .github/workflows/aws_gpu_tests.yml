@@ -45,7 +45,7 @@ on:
 jobs:
   start-runner:
     name: Start self-hosted EC2 runner
-    if: github.repository == 'newton-physics/newton'
+    if: github.repository == 'shi-eric/newton'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -188,7 +188,7 @@ jobs:
     needs:
       - start-runner
       - gpu-unit-tests
-    if: always() && github.repository == 'newton-physics/newton'
+    if: always() && github.repository == 'shi-eric/newton'
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708  # v5.1.1

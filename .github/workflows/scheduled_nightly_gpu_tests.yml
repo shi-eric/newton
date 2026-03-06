@@ -1,13 +1,13 @@
 name: Scheduled Nightly GPU Tests
 
 on:
-  schedule:
-    - cron: '0 8 * * *'  # 8 AM UTC / midnight PST
-  workflow_dispatch:
+  push:
+    branches:
+      - ershi/test-nightly-gpu
 
 jobs:
   gpu-tests:
-    if: github.repository == 'newton-physics/newton'
+    if: github.repository == 'shi-eric/newton'
     uses: ./.github/workflows/aws_gpu_tests.yml
     with:
       instance-type: g5.12xlarge  # 4x NVIDIA A10 GPUs, 48 vCPUs
