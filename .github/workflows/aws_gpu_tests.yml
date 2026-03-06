@@ -9,8 +9,8 @@ name: GPU Unit Tests on AWS EC2 (Reusable)
 # Workflow configuration variables
 env:
   AWS_REGION: us-east-2
-  AWS_INSTANCE_TYPE: g7e.2xlarge
-  AWS_VOLUME_SIZE: 92
+  AWS_INSTANCE_TYPE: ${{ inputs.instance-type || 'g7e.2xlarge' }}
+  AWS_VOLUME_SIZE: ${{ inputs.volume-size || '92' }}
   AWS_VOLUME_TYPE: gp3
   AWS_SECURITY_GROUP_IDS: sg-07807c44e7f2a368a
   AWS_ROLE_ARN: arn:aws:iam::968945269301:role/newton-physics-newton-ec2-github-runner-role
@@ -25,6 +25,16 @@ on:
         required: false
         type: string
         default: ''
+      instance-type:
+        description: 'EC2 instance type'
+        required: false
+        type: string
+        default: 'g7e.2xlarge'
+      volume-size:
+        description: 'EBS volume size in GB'
+        required: false
+        type: string
+        default: '92'
     secrets:
       GH_PERSONAL_ACCESS_TOKEN:
         required: true
