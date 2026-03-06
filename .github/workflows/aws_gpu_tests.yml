@@ -88,6 +88,11 @@ jobs:
               {"imageId": "${{ env.LATEST_AMI_ID }}", "subnetId": "subnet-051b9d2e71acf8047", "securityGroupId": "${{ env.AWS_SECURITY_GROUP_IDS }}"},
               {"imageId": "${{ env.LATEST_AMI_ID }}", "subnetId": "subnet-0c98bd06abe8ee5eb", "securityGroupId": "${{ env.AWS_SECURITY_GROUP_IDS }}"}
             ]
+          pre-runner-script: |
+            if [ -d /opt/dlami/nvme ]; then
+              mkdir -p /opt/dlami/nvme/actions-runner/_work
+              ln -s /opt/dlami/nvme/actions-runner/_work /actions-runner/_work
+            fi
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "ec2-github-runner"},
@@ -102,17 +107,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Move workspace to NVMe
-        run: |
-          if [ -d /opt/dlami/nvme ]; then
-            mkdir -p /opt/dlami/nvme/actions-runner/_work
-            rm -rf $HOME/_work
-            ln -s /opt/dlami/nvme/actions-runner/_work $HOME/_work
-            echo "Workspace moved to NVMe storage"
-          else
-            echo "No NVMe storage found, using default workspace"
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
