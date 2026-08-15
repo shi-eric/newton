@@ -14,6 +14,14 @@ Put future AWS CI templates here too. This gives the small group that maintains
 the infrastructure one place to look and keeps AWS details out of the rest of
 the project.
 
+## Runner attribution tags
+
+The runner workflows apply repository, trigger, workload, and run identifiers
+as resource tags on EC2 instances and attached EBS volumes. These tags support
+resource-level attribution through the EC2 console and APIs. The AWS account
+used by Newton CI does not allow user-defined cost-allocation tags, so these
+keys cannot be activated as Cost Explorer or Cost and Usage Report dimensions.
+
 ## Inventory
 
 | Template | Stack | Region | Required parameters |
