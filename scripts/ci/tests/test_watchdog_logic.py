@@ -118,6 +118,22 @@ class TestWatchdogLogic(unittest.TestCase):
             ],
         )
 
+    def test_watchdog_excludes_unowned_instances(self):
+        """Exclude overdue instances not owned by Newton."""
+        namespace = self._lambda_namespace()
+        now = datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)
+        instance = self._instance(now)
+        instance["Tags"][0]["Value"] = "other-runner-role"
+
+        overdue = namespace["find_overdue_instances"](
+            ["us-east-2"],
+            lambda region: FakeEc2([instance]),
+            now,
+            60,
+        )
+
+        self.assertEqual(overdue, [])
+
     def test_watchdog_tolerates_missing_attribution_tags(self):
         """Report unknown metadata for runners created before attribution tags."""
         namespace = self._lambda_namespace()
