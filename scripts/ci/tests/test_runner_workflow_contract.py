@@ -90,6 +90,11 @@ class TestRunnerWorkflowContract(unittest.TestCase):
                 if path in DIRECT_DISPATCH_WORKFLOWS:
                     dispatch = self._event_block(workflow, "workflow_dispatch", "\njobs:")
                     dispatch_input = self._input_block(dispatch, "trigger-category")
+                    self.assertIn("        type: choice\n", dispatch_input)
+                    self.assertIn(
+                        "        options:\n          - manual\n          - scheduled-nightly\n",
+                        dispatch_input,
+                    )
                     self.assertIn("        default: 'manual'\n", dispatch_input)
 
                 tags = self._resource_tag_block(workflow)

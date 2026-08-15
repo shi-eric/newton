@@ -32,7 +32,10 @@ on:
       trigger-category:
         description: 'Normalized workflow trigger category'
         required: false
-        type: string
+        type: choice
+        options:
+          - manual
+          - scheduled-nightly
         default: 'manual'
 
 jobs:
