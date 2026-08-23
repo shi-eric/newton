@@ -19,7 +19,6 @@ RUNNER_WORKFLOWS = (
     ROOT / ".github" / "workflows" / "aws_gpu_benchmarks.yml",
     ROOT / ".github" / "workflows" / "minimum_deps_tests.yml",
     ROOT / ".github" / "workflows" / "warp_nightly_tests.yml",
-    ROOT / ".github" / "workflows" / "mujoco_warp_tests.yml",
 )
 
 spec = importlib.util.spec_from_file_location("discover_aws_runner_config", DISCOVERY_SCRIPT)
