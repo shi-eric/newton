@@ -13380,6 +13380,51 @@ def Xform "World"
         finally:
             os.unlink(path)
 
+    def test_mesh_create_from_file_glb_scene_transforms(self):
+        """Test Mesh.create_from_file applies glTF scene-graph node transforms.
+
+        A multi-node glb stores each part's vertices in node-local space;
+        the authored placement lives in the scene graph. The loader must
+        compose those transforms, otherwise all parts collapse onto the
+        origin as overlapping local geometry.
+        """
+        try:
+            import trimesh
+        except ImportError:
+            self.skipTest("trimesh not installed")
+
+        scene = trimesh.Scene()
+        part = trimesh.creation.box(extents=[2.0, 2.0, 2.0])
+        scene.add_geometry(
+            part,
+            node_name="part_right",
+            geom_name="part_right",
+            transform=trimesh.transformations.translation_matrix([10.0, 0.0, 0.0]),
+        )
+        scene.add_geometry(
+            part,
+            node_name="part_left",
+            geom_name="part_left",
+            transform=trimesh.transformations.translation_matrix([-10.0, 0.0, 0.0]),
+        )
+
+        with tempfile.NamedTemporaryFile(suffix=".glb", delete=False) as f:
+            scene.export(f.name)
+            path = f.name
+
+        try:
+            mesh = newton.Mesh.create_from_file(path)
+            vertices = np.asarray(mesh.vertices)
+
+            # Both parts must land at their authored offsets: the merged
+            # bounding box spans the ~22-unit separation. Without transform
+            # composition the two parts overlap at the origin and no axis
+            # exceeds 2 units.
+            span = vertices.max(axis=0) - vertices.min(axis=0)
+            self.assertGreater(float(span.max()), 20.0)
+        finally:
+            os.unlink(path)
+
     def test_mesh_create_from_file_not_found(self):
         """Test Mesh.create_from_file raises on missing file."""
         with self.assertRaises(FileNotFoundError):
