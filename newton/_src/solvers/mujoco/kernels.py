@@ -1475,7 +1475,7 @@ def update_jnt_connect_constraint_anchors_kernel(
 def create_convert_mjw_contacts_to_newton_kernel():
     """Create contact conversion kernel; deferred so ``wp.static`` doesn't import mujoco_warp at module load."""
 
-    @wp.kernel
+    @wp.kernel(module="unique")
     def convert_mjw_contacts_to_newton_kernel(
         # inputs
         mjc_geom_to_newton_shape: wp.array2d[wp.int32],
