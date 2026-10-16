@@ -9,6 +9,7 @@ import copy
 import ctypes
 import functools
 import gc
+import logging
 import math
 import warnings
 import weakref
@@ -39,6 +40,7 @@ from ..core.types import (
     axis_to_vec3,
     flag_to_int,
 )
+from ..exceptions import NewtonDeprecationWarning, NewtonWarning
 from ..geometry import (
     Gaussian,
     GeoType,
@@ -87,6 +89,8 @@ if TYPE_CHECKING:
     UsdStage = Usd.Stage
 else:
     UsdStage = Any
+
+logger = logging.getLogger(__name__)
 
 
 def _validate_opacity(value: Any, value_name: str) -> float:
@@ -3077,7 +3081,7 @@ class ModelBuilder:
         if controller_class is not _DEPRECATED_ACTUATOR_DRIVE_UNSET:
             if drive_class is not None:
                 raise TypeError("Specify only one of 'drive_class' and deprecated 'controller_class'.")
-            warnings.warn(_ACTUATOR_CONTROLLER_CLASS_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
+            warnings.warn(_ACTUATOR_CONTROLLER_CLASS_DEPRECATION_MSG, NewtonDeprecationWarning, stacklevel=2)
             drive_class = controller_class
         if drive_class is None:
             raise TypeError("add_actuator() requires 'drive_class'")
@@ -3094,6 +3098,7 @@ class ModelBuilder:
             warnings.warn(
                 f"add_actuator: {drive_class.__name__} ignoring "
                 f"unrecognized parameter(s): {', '.join(sorted(unrecognized))}",
+                NewtonWarning,
                 stacklevel=2,
             )
         drive_shared_names = getattr(drive_class, "SHARED_PARAMS", set())
@@ -3378,7 +3383,7 @@ class ModelBuilder:
         .. deprecated:: 1.7
             Limit joint rotations with the per-DOF limits of :class:`JointDofConfig` instead.
         """
-        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
+        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, NewtonDeprecationWarning, stacklevel=2)
         if self._deprecated_joint_twist_lower is None:
             self._deprecated_joint_twist_lower = []
         return self._deprecated_joint_twist_lower
@@ -3386,7 +3391,7 @@ class ModelBuilder:
     @joint_twist_lower.setter
     def joint_twist_lower(self, value: list[float]) -> None:
         # stacklevel skips ModelBuilder.__setattr__ to report the caller.
-        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, DeprecationWarning, stacklevel=3)
+        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, NewtonDeprecationWarning, stacklevel=3)
         self._deprecated_joint_twist_lower = value
 
     @property
@@ -3396,7 +3401,7 @@ class ModelBuilder:
         .. deprecated:: 1.7
             Limit joint rotations with the per-DOF limits of :class:`JointDofConfig` instead.
         """
-        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
+        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, NewtonDeprecationWarning, stacklevel=2)
         if self._deprecated_joint_twist_upper is None:
             self._deprecated_joint_twist_upper = []
         return self._deprecated_joint_twist_upper
@@ -3404,7 +3409,7 @@ class ModelBuilder:
     @joint_twist_upper.setter
     def joint_twist_upper(self, value: list[float]) -> None:
         # stacklevel skips ModelBuilder.__setattr__ to report the caller.
-        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, DeprecationWarning, stacklevel=3)
+        warnings.warn(_JOINT_TWIST_LIMIT_DEPRECATION_MSG, NewtonDeprecationWarning, stacklevel=3)
         self._deprecated_joint_twist_upper = value
 
     @staticmethod
@@ -4512,7 +4517,7 @@ class ModelBuilder:
             only_load_enabled_rigid_bodies: If True, only rigid bodies which do not have `physics:rigidBodyEnabled` set to False are loaded.
             only_load_enabled_joints: If True, only joints which do not have `physics:jointEnabled` set to False are loaded.
             joint_drive_gains_scaling: The default scaling of the PD control gains (stiffness and damping), if not set in the PhysicsScene with as "newton:joint_drive_gains_scaling".
-            verbose: If True, print additional information about the parsed USD file. Default is False.
+            verbose: If True, log additional information about the parsed USD file. Default is False.
             ignore_paths: A list of regular expressions matching prim paths to ignore.
             collapse_fixed_joints: If True, fixed joints are removed and the respective bodies are merged. Only considered if not set on the PhysicsScene as "newton:collapse_fixed_joints".
             enable_self_collisions: Default for whether self-collisions are enabled for all shapes within an articulation. Resolved via the schema resolver from ``newton:selfCollisionEnabled`` (NewtonArticulationRootAPI) or ``physxArticulation:enabledSelfCollisions``; if neither is authored, this value takes precedence.
@@ -4889,7 +4894,7 @@ class ModelBuilder:
             ignore_inertial_definitions: If True, the inertial parameters defined in the MJCF are ignored and the inertia is calculated from the shape geometry.
             collapse_fixed_joints: If True, fixed joints are removed and the respective bodies are merged.
             collapse_massless_fixed_root: If True, collapse only the massless fixed-joint chain below an imported free root body. Ignored when ``collapse_fixed_joints`` is True.
-            verbose: If True, print additional information about parsing the MJCF.
+            verbose: If True, log additional information about parsing the MJCF.
             skip_equality_constraints: Whether <equality> tags should be parsed. If True, equality constraints are ignored.
             convert_mjc_equality_constraints: Whether MuJoCo equality constraints should be converted to Newton loop
                 joints or mimic constraints while preserving MuJoCo equality metadata for SolverMuJoCo. If False,
@@ -5754,7 +5759,7 @@ class ModelBuilder:
                     f"child {child} (label: {self.body_label[child]!r}), but another joint already connects these "
                     f"bodies. A FREE joint parallel to another joint is inconsistent. Use add_link() "
                     f"with the appropriate joint type instead of add_body().",
-                    UserWarning,
+                    NewtonWarning,
                     stacklevel=_external_warning_stacklevel(),
                 )
             else:
@@ -5763,7 +5768,7 @@ class ModelBuilder:
                     f"child {child} (label: {self.body_label[child]!r}), but another joint already connects these "
                     f"bodies. Parallel joints between the same pair of bodies have undefined semantics and may not "
                     f"behave as expected.",
-                    UserWarning,
+                    NewtonWarning,
                     stacklevel=_external_warning_stacklevel(),
                 )
 
@@ -6611,7 +6616,7 @@ class ModelBuilder:
         """
         warnings.warn(
             "ModelBuilder.add_joint_cable() is deprecated in Newton 1.6; use add_joint_rod() instead.",
-            DeprecationWarning,
+            NewtonDeprecationWarning,
             stacklevel=_external_warning_stacklevel(),
         )
         return self.add_joint_rod(
@@ -7094,7 +7099,7 @@ class ModelBuilder:
         warnings.warn(
             "ModelBuilder.add_constraint_mimic() is deprecated in Newton 1.7; "
             "use set_joint_mimic() for joints with matching dimensions instead.",
-            DeprecationWarning,
+            NewtonDeprecationWarning,
             stacklevel=_external_warning_stacklevel(),
         )
         joint_count = self.joint_count
@@ -7277,7 +7282,7 @@ class ModelBuilder:
         """Removes fixed joints from the model and merges the bodies they connect. This is useful for simplifying the model for faster and more stable simulation.
 
         Args:
-            verbose: If True, print additional information about the collapsed joints.
+            verbose: If True, log additional information about the collapsed joints.
             joints_to_keep: An optional sequence of joint labels or original joint indices to be excluded from
                 the collapse process.
 
@@ -7450,9 +7455,13 @@ class ModelBuilder:
                 if verbose:
                     parent_lbl = self.body_label[parent_body] if parent_body > -1 else "world"
                     child_lbl = self.body_label[child_body]
-                    print(
-                        f"Skipping collapse of fixed joint {joint['label']} between {parent_lbl} and {child_lbl}: "
-                        f"{child_lbl} is referenced by a constraint or tendon and cannot be merged into world"
+                    logger.info(
+                        "Skipping collapse of fixed joint %s between %s and %s: %s is referenced by a "
+                        "constraint or tendon and cannot be merged into world",
+                        joint["label"],
+                        parent_lbl,
+                        child_lbl,
+                        child_lbl,
                     )
 
             if joint_in_keep_list and joint["type"] == JointType.FIXED:
@@ -7460,16 +7469,20 @@ class ModelBuilder:
                 parent_lbl = self.body_label[parent_body] if parent_body > -1 else "world"
                 child_lbl = self.body_label[child_body]
                 if verbose:
-                    print(
-                        f"Skipping collapse of joint {joint['label']} between {parent_lbl} and {child_lbl}: "
-                        f"{child_lbl} is listed in joints_to_keep and this fixed joint will be preserved"
+                    logger.info(
+                        "Skipping collapse of joint %s between %s and %s: %s is listed in joints_to_keep "
+                        "and this fixed joint will be preserved",
+                        joint["label"],
+                        parent_lbl,
+                        child_lbl,
+                        child_lbl,
                     )
                 # Warn if the child_body of skipped joint has zero or negative mass
                 if body_data[child_body]["mass"] <= 0:
                     warnings.warn(
                         f"Skipped joint {joint['label']} has a child {child_lbl} with zero or negative mass ({body_data[child_body]['mass']}). "
                         f"This may cause unexpected behavior.",
-                        UserWarning,
+                        NewtonWarning,
                         stacklevel=3,
                     )
 
@@ -7480,9 +7493,13 @@ class ModelBuilder:
                 child_lbl = self.body_label[child_body]
                 last_dynamic_body_label = self.body_label[last_dynamic_body] if last_dynamic_body > -1 else "world"
                 if verbose:
-                    print(
-                        f"Remove fixed joint {joint['label']} between {parent_lbl} and {child_lbl}, "
-                        f"merging {child_lbl} into {last_dynamic_body_label}"
+                    logger.info(
+                        "Remove fixed joint %s between %s and %s, merging %s into %s",
+                        joint["label"],
+                        parent_lbl,
+                        child_lbl,
+                        child_lbl,
+                        last_dynamic_body_label,
                     )
                 child_id = body_data[child_body]["original_id"]
                 relative_xform = incoming_xform
@@ -7496,8 +7513,11 @@ class ModelBuilder:
                     shape_tf = self.shape_transform[shape]
                     self.shape_transform[shape] = incoming_xform * shape_tf
                     if verbose:
-                        print(
-                            f"  Shape {shape} moved to body {last_dynamic_body_label} with transform {self.shape_transform[shape]}"
+                        logger.info(
+                            "  Shape %s moved to body %s with transform %s",
+                            shape,
+                            last_dynamic_body_label,
+                            self.shape_transform[shape],
                         )
                     if last_dynamic_body > -1:
                         self.shape_body[shape] = body_data[last_dynamic_body]["id"]
@@ -8003,14 +8023,14 @@ class ModelBuilder:
 
             if old_joint1 != -1 and old_joint1 not in joint_remap:
                 if verbose:
-                    print(f"Warning: Equality constraint references removed joint {old_joint1}, disabling constraint")
+                    logger.warning("Equality constraint references removed joint %s, disabling constraint", old_joint1)
                 while len(enabled_values) <= i:
                     enabled_values.append(None)
                 enabled_values[i] = False
 
             if old_joint2 != -1 and old_joint2 not in joint_remap:
                 if verbose:
-                    print(f"Warning: Equality constraint references removed joint {old_joint2}, disabling constraint")
+                    logger.warning("Equality constraint references removed joint %s, disabling constraint", old_joint2)
                 while len(enabled_values) <= i:
                     enabled_values.append(None)
                 enabled_values[i] = False
@@ -8024,14 +8044,14 @@ class ModelBuilder:
                 self.constraint_mimic_joint0[i] = joint_remap[old_joint0]
             elif old_joint0 != -1:
                 if verbose:
-                    print(f"Warning: Mimic constraint references removed joint {old_joint0}, disabling constraint")
+                    logger.warning("Mimic constraint references removed joint %s, disabling constraint", old_joint0)
                 self.constraint_mimic_enabled[i] = False
 
             if old_joint1 in joint_remap:
                 self.constraint_mimic_joint1[i] = joint_remap[old_joint1]
             elif old_joint1 != -1:
                 if verbose:
-                    print(f"Warning: Mimic constraint references removed joint {old_joint1}, disabling constraint")
+                    logger.warning("Mimic constraint references removed joint %s, disabling constraint", old_joint1)
                 self.constraint_mimic_enabled[i] = False
 
         target_kind_attr = self.custom_attributes.get("mujoco:equality_constraint_target_kind")
@@ -8140,7 +8160,7 @@ class ModelBuilder:
                 f"Deformable curve '{label}' is unavailable after collapse_fixed_joints because one or more "
                 "of its segment bodies or joints were removed; pass the relevant fixed joint through "
                 "joints_to_keep to preserve the complete deformable object.",
-                UserWarning,
+                NewtonWarning,
                 stacklevel=2,
             )
 
@@ -9381,6 +9401,7 @@ class ModelBuilder:
                         warnings.warn(
                             f"Remeshing with method '{method}' failed for shape {shape}: the backend returned no "
                             "convex parts. Falling back to convex_hull.",
+                            NewtonWarning,
                             stacklevel=2,
                         )
                         decomposition_failed = True
@@ -9449,7 +9470,9 @@ class ModelBuilder:
                     raise RuntimeError(f"Remeshing with method '{method}' failed.") from e
                 else:
                     warnings.warn(
-                        f"Remeshing with method '{method}' failed: {e}. Falling back to convex_hull.", stacklevel=2
+                        f"Remeshing with method '{method}' failed: {e}. Falling back to convex_hull.",
+                        NewtonWarning,
+                        stacklevel=2,
                     )
                     method = "convex_hull"
                     # kwargs were addressed to the failed decomposition method
@@ -9485,6 +9508,7 @@ class ModelBuilder:
                         else:
                             warnings.warn(
                                 f"Remeshing with method '{method}' failed for shape {shape}: {e}. Falling back to bounding_box.",
+                                NewtonWarning,
                                 stacklevel=2,
                             )
                             remesh_failed = True
@@ -9817,7 +9841,7 @@ class ModelBuilder:
                     "add_rod: wrap_in_articulation=False requires the caller to wrap joints via add_articulation() "
                     "before finalize; closed=True also adds a loop-closing joint that must remain outside any "
                     "articulation.",
-                    UserWarning,
+                    NewtonWarning,
                     stacklevel=_external_warning_stacklevel(),
                 )
 
@@ -10110,7 +10134,7 @@ class ModelBuilder:
         assert positions is not None
         warnings.warn(
             _ADD_ROD_POSITIONS_DEPRECATION_MSG,
-            DeprecationWarning,
+            NewtonDeprecationWarning,
             stacklevel=_external_warning_stacklevel(),
         )
         result = self._add_rod_chain(
@@ -10238,7 +10262,7 @@ class ModelBuilder:
         start_joint = self.joint_count
         warnings.warn(
             _ADD_ROD_GRAPH_DEPRECATION_MSG,
-            DeprecationWarning,
+            NewtonDeprecationWarning,
             stacklevel=_external_warning_stacklevel(),
         )
         result = self._add_rod_graph(
@@ -10678,7 +10702,7 @@ class ModelBuilder:
                             "With wrap_in_articulation=True, joints are built as a tree/forest, so "
                             "cycles are not closed. Use wrap_in_articulation=False to retain every "
                             "cycle adjacency joint.",
-                            UserWarning,
+                            NewtonWarning,
                             stacklevel=_external_warning_stacklevel(),
                         )
 
@@ -11053,7 +11077,7 @@ class ModelBuilder:
         area = np.linalg.det(D) / 2.0
 
         if area <= 0.0:
-            print("inverted or degenerate triangle element")
+            logger.warning("inverted or degenerate triangle element")
             return 0.0
         else:
             inv_D = np.linalg.inv(D)
@@ -11146,7 +11170,7 @@ class ModelBuilder:
         areas[areas < 0.0] = 0.0
         valid_inds = (areas > 0.0).nonzero()[0]
         if len(valid_inds) < len(areas):
-            print("inverted or degenerate triangle elements")
+            logger.warning("inverted or degenerate triangle elements")
 
         filtered_custom_attributes = None
         if custom_attributes:
@@ -11260,7 +11284,7 @@ class ModelBuilder:
         volume = np.linalg.det(Dm) / 6.0
 
         if volume <= 0.0:
-            print("inverted tetrahedral element")
+            logger.warning("inverted tetrahedral element")
         else:
             inv_Dm = np.linalg.inv(Dm)
 
@@ -12391,7 +12415,7 @@ class ModelBuilder:
             warnings.warn(
                 f"parent_body {parent_body} has zero or negative mass ({self.body_mass[parent_body]}). "
                 f"This may cause unexpected behavior.",
-                UserWarning,
+                NewtonWarning,
                 stacklevel=3,
             )
 
@@ -12465,7 +12489,7 @@ class ModelBuilder:
                 warnings.warn(
                     f"Body {body_id} is a parent in multiple articulations {parent_articulations}. "
                     f"Using articulation {result}. This may indicate an unusual model structure.",
-                    UserWarning,
+                    NewtonWarning,
                     stacklevel=3,
                 )
             return result
@@ -12727,7 +12751,7 @@ class ModelBuilder:
         warnings.warn(
             "ModelBuilder.request_contact_attributes() is deprecated in Newton 1.7; "
             "request SolverBase.Observables from the solver instead.",
-            DeprecationWarning,
+            NewtonDeprecationWarning,
             stacklevel=2,
         )
         Contacts.validate_extended_attributes(attributes)
@@ -12752,7 +12776,7 @@ class ModelBuilder:
         warnings.warn(
             "ModelBuilder.request_state_attributes() is deprecated in Newton 1.7; "
             "request SolverBase.Observables from the solver instead.",
-            DeprecationWarning,
+            NewtonDeprecationWarning,
             stacklevel=2,
         )
         State.validate_extended_attributes(attributes)
@@ -13207,6 +13231,7 @@ class ModelBuilder:
                 f"This can cause missed collisions in broad phase because effective expansion uses margin + gap. "
                 f"Set gap >= 0 for each shape. "
                 f"Affected shapes: {example_shapes}" + ("..." if len(shapes_with_bad_gap) > 5 else ""),
+                NewtonWarning,
                 stacklevel=2,
             )
         return len(shapes_with_bad_gap) == 0
@@ -13617,6 +13642,7 @@ class ModelBuilder:
                         f"Joints in articulation '{art_key}' (id={art_id}) are not in DFS topological order. "
                         f"This may cause issues with some solvers (e.g., MuJoCo). "
                         f"Current order: {list(art_joints)}, expected: {joint_order}.",
+                        NewtonWarning,
                         stacklevel=2,
                     )
                     all_ordered = False
@@ -13629,6 +13655,7 @@ class ModelBuilder:
                 )
                 warnings.warn(
                     f"Failed to validate joint ordering for articulation '{art_key}' (id={art_id}): {e}",
+                    NewtonWarning,
                     stacklevel=2,
                 )
                 all_ordered = False
@@ -14648,6 +14675,7 @@ class ModelBuilder:
                                 warnings.warn(
                                     f"Texture SDF construction failed for shape {i} "
                                     f"(type={shape_type}): {e}. Falling back to BVH.",
+                                    NewtonWarning,
                                     stacklevel=3,
                                 )
                                 tex_data = create_empty_texture_sdf_data()
@@ -14717,6 +14745,7 @@ class ModelBuilder:
                         warnings.warn(
                             f"Full-surface SDF construction failed for mesh shape {i} ({e}); it falls "
                             "back to the legacy per-particle soft-contact path.",
+                            NewtonWarning,
                             stacklevel=3,
                         )
                         continue
@@ -14748,6 +14777,7 @@ class ModelBuilder:
                 warnings.warn(
                     "Heightfield-vs-heightfield collision is not supported; "
                     "contacts between heightfield pairs will be skipped.",
+                    NewtonWarning,
                     stacklevel=3,
                 )
             from ..utils.heightfield import HeightfieldData, create_empty_heightfield_data  # noqa: PLC0415
@@ -15091,6 +15121,7 @@ class ModelBuilder:
                     warnings.warn(
                         f"Inertia validation corrected {num_corrections} bodies. "
                         f"Set validate_inertia_detailed=True for detailed per-body warnings.",
+                        NewtonWarning,
                         stacklevel=3,
                     )
 
@@ -15355,7 +15386,7 @@ class ModelBuilder:
                         warnings.warn(
                             f"Custom attribute '{full_key}' has {attr_count} values but frequency '{freq_key}' "
                             f"expects {expected_count}. Missing values will be filled with defaults.",
-                            UserWarning,
+                            NewtonWarning,
                             stacklevel=3,
                         )
 

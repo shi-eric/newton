@@ -17,6 +17,7 @@ import numpy as np
 import warp as wp
 
 from ...core.types import override
+from ...exceptions import NewtonDeprecationWarning
 from ...geometry.types import GeoType
 from ...sim import (
     Contacts,
@@ -1296,7 +1297,7 @@ class SolverKamino(SolverBase, CouplingInterface):
             warnings.warn(
                 "SolverKamino.update_contacts() force export is deprecated in Newton 1.7; request "
                 "SolverBase.ObservableKind.CONTACT_F and pass SolverBase.Observables to step().",
-                DeprecationWarning,
+                NewtonDeprecationWarning,
                 stacklevel=2,
             )
         self._populate_contact_observables(contacts, state, contacts.force)
