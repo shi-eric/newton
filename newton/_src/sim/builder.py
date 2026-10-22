@@ -956,9 +956,20 @@ class ModelBuilder:
         kd: float = 100.0
         """The normal contact damping coefficient [N·s/m]."""
         kf: float = 1000.0
-        """The contact friction gain [N·s/m]."""
+        """The contact friction gain [N·s/m].
+
+        Slope of the viscous friction regularization in
+        :class:`~newton.solvers.SolverSemiImplicit` and
+        :class:`~newton.solvers.SolverFeatherstone`; also used by
+        :class:`~newton.solvers.SolverMuJoCo`. See
+        :ref:`Contact friction gain and adhesion`."""
         ka: float = 0.0
-        """The contact adhesion distance [m]."""
+        """The contact adhesion distance [m].
+
+        Distance within which the normal force attracts the shapes, used by
+        :class:`~newton.solvers.SolverSemiImplicit` and
+        :class:`~newton.solvers.SolverFeatherstone`. ``0`` disables adhesion. See
+        :ref:`Contact friction gain and adhesion`."""
         mu: float = 1.0
         """The coefficient of friction."""
         restitution: float = 0.0
