@@ -229,10 +229,12 @@ class ViewerRTX(ViewerUSD):
                 applies it to bodies, camera, and debug geometry. The caller
                 owns the stage's content, lights, and lifetime; the viewer adds
                 its camera, render product, and debug geometry under
-                ``/__newton_viewer``. The viewer generates no geometry for the
-                model's shapes, cloth, or particles; ``show_triangles`` (off by
-                default here) and ``show_particles`` draw simulated cloth and
-                particles as debug overlays. :meth:`set_visible_worlds`,
+                ``/__newton_viewer``. Model shapes come from the supplied stage.
+                The viewer does not update its authored deformable prims.
+                ``show_triangles``, ``show_deformable_visual_meshes``, and
+                ``show_particles`` enable separate overlays, all off by default
+                here. Hidden overlay geometry may still be registered under the
+                viewer's subtree. :meth:`set_visible_worlds`,
                 ``show_collision``, and ``show_visual`` affect only the debug
                 geometry, ``environment`` must stay ``"default"``, and layers
                 are not supported. :meth:`set_model` and :meth:`end_frame`
@@ -1309,7 +1311,7 @@ void main() {
             else:
                 self.camera.pos = PyVec3(0.0, 2.0, 10.0)
 
-        self.picking = Picking(model, world_offsets=self.world_offsets)
+        self.picking = Picking(model, world_offsets=self.world_offsets) if model is not None else None
         self.wind = Wind(model)
 
         if model is not None:
@@ -1666,22 +1668,16 @@ void main() {
                 self._hide_picking_line()
             return
 
-        pick_body_idx = self.picking.pick_body.numpy()[0]
-        if pick_body_idx < 0:
-            if self._phase == self._PHASE_RENDER:
-                self._hide_picking_line()
-            return
-
-        pick_state = self.picking.pick_state.numpy()
-        pick_target = pick_state[0]["picking_target_world"]
-        picked_point = pick_state[0]["picked_point_world"]
+        pick_body_idx = self.picking.pick_body
+        pick_target = self.picking.pick_target
+        picked_point = self.picking.pick_point
 
         body_world = self.model.body_world if self.model is not None else None
         if self.world_offsets is not None and self.world_offsets.shape[0] > 0:
             if body_world is not None:
                 body_world_idx = body_world.numpy()[pick_body_idx]
                 if body_world_idx >= 0 and body_world_idx < self.world_offsets.shape[0]:
-                    world_offset = self.world_offsets.numpy()[body_world_idx]
+                    world_offset = wp.vec3(*self.world_offsets.numpy()[body_world_idx])
                     pick_target = pick_target + world_offset
                     picked_point = picked_point + world_offset
 
@@ -1698,7 +1694,7 @@ void main() {
             state: The current simulation state.
         """
         if self.picking_enabled and self.picking is not None:
-            self.picking._apply_picking_force(state)
+            self.picking.apply_force(state)
 
         if self.wind is not None:
             self.wind._apply_wind_force(state)
@@ -1814,6 +1810,14 @@ void main() {
             # Avoid the default glass-like IOR so opacity behaves like viewer alpha.
             return 1.0
         return None
+
+    @override
+    def _log_deformable_visual_mesh(self, name, points, indices, *, hidden=False, **kwargs):
+        name = self._qualify(name)
+        if hidden and self._phase == self._PHASE_RENDER and name in self._mesh_prim_paths:
+            self._pending_mesh_visibility[name] = False
+            return
+        super()._log_deformable_visual_mesh(name, points, indices, hidden=hidden, **kwargs)
 
     @override
     def log_mesh(
@@ -2977,8 +2981,9 @@ void main() {
 
         super().clear_model()
         if self._borrowed_stage is not None:
-            # The stage presents the model, so simulated cloth would duplicate its deformables.
+            # The stage already presents the deformables; overlays are opt-in.
             self.show_triangles = False
+            self.show_deformable_visual_meshes = False
 
     def _has_other_user_layers(self) -> bool:
         active_layer_id = getattr(self, "_active_layer_id", _DEFAULT_LAYER_ID)
